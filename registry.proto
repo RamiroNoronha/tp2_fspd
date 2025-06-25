@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+service Registry {
+    rpc MapService (MapRequest) returns (MapReply) {}
+
+    rpc UnmapService (UnmapRequest) returns (UnmapReply) {}
+
+    rpc QueryService (QueryRequest) returns (QueryReply) {}
+
+    rpc Finalize (FinalizeRequest) returns (FinalizeReply) {}
+}
+
+message MapRequest {
+    string name = 1;
+    string portmapper_location = 2;
+}
+
+message MapReply {
+    int32 number_of_services = 1;
+}
+
+message UnmapRequest {
+    string name = 1;
+}
+
+message UnmapReply {
+    int32 status = 1;
+}
+
+message QueryRequest {
+    string name = 1;
+}
+
+message QueryReply {
+    string portmapper_location = 1;    
+}
+
+message FinalizeRequest {}
+
+message FinalizeReply {
+    int32 registered_services_count = 1;
+}
