@@ -21,9 +21,6 @@ def run():
 
                 command = parts[0]
 
-                if command not in ['R', 'U', 'G', 'T']:
-                    continue
-
                 try:
                     if command == 'R' and len(parts) == 3:
                         name = parts[1]
