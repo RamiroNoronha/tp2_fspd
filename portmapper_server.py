@@ -77,15 +77,15 @@ class PortMapperService(portmapper_pb2_grpc.PortMapperServicer):
 
 
 def serve():
-    if len(sys.argv) != 3:
+    if len(sys.argv) < 2:
         print("Args error")
         sys.exit(1)
 
     port = sys.argv[1]
-    registry_port = sys.argv[2]
 
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
 
+    registry_port = sys.argv[2] if len(sys.argv) == 3 else None
     portmapper_pb2_grpc.add_PortMapperServicer_to_server(PortMapperService(server, port, registry_port ), server)
 
     server.add_insecure_port(f'[::]:{port}')
