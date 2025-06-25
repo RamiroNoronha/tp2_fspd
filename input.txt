@@ -1,0 +1,6 @@
+R servico_A 10.5
+R servico_B 20.25
+G servico_A
+U 1025
+G servico_A
+T
