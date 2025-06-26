@@ -11,9 +11,11 @@ def run():
     server_address = sys.argv[1]
 
     try:
+        # Create a gRPC channel to the server
         with grpc.insecure_channel(server_address) as channel:
             stub = portmapper_pb2_grpc.PortMapperStub(channel)
 
+            # Read commands from standard input
             for line in sys.stdin:
                 parts = line.strip().split()
                 if not parts:
@@ -22,6 +24,7 @@ def run():
                 command = parts[0]
 
                 try:
+                    # Register a service: R <name> <value>
                     if command == 'R' and len(parts) == 3:
                         name = parts[1]
                         value = float(parts[2])
@@ -29,12 +32,14 @@ def run():
                         print(response.port)
                         continue
                     
+                    # Unregister a service: U <port>
                     if command == 'U' and len(parts) == 2:
                         port = int(parts[1])
                         response = stub.UnregisterService(portmapper_pb2.UnregisterRequest(port=port))
                         print(response.status)
                         continue
 
+                    # Get service info: G <name>
                     if command == 'G' and len(parts) == 2:
                         name = parts[1]
                         response = stub.GetServiceInfo(portmapper_pb2.GetInfoRequest(name=name))
@@ -42,13 +47,14 @@ def run():
                             print(f"{response.port} {response.value:.6f}")
                         continue
 
+                    # Terminate server: T
                     if command == 'T' and len(parts) == 1:
                         response = stub.Terminate(portmapper_pb2.TerminateRequest())
                         print(response.registered_services_count)
                         break 
 
-
                 except ValueError:
+                    # Ignore lines with invalid values
                     continue
 
     except grpc.RpcError as e:

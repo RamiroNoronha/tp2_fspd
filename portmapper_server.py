@@ -17,7 +17,8 @@ class PortMapperService(portmapper_pb2_grpc.PortMapperServicer):
         self._services = {}
         self._next_port = 1025
         self._lock = threading.Lock()
-
+    
+    # Function responsable for comunicate to the another server (Registry server)
     def _contact_registry(self, operation, name):
         if not self._registry_locator:
             return
@@ -35,44 +36,55 @@ class PortMapperService(portmapper_pb2_grpc.PortMapperServicer):
             print(f"ERRO: It wasn't possible to connect to the registry in {self._registry_locator}. Erro: {error.details()}", file=sys.stderr)    
 
     def RegisterService(self, request, context):
+        # Acquire lock to safely access the services dictionary
         with self._lock:
+            # Verify if the service is already register, if so, just update the value
             if request.name in self._services:
                 self._services[request.name]['value'] = request.value
                 return portmapper_pb2.RegisterReply(port=self._services[request.name]['port'])
+            # If array here, the service does not exist
             port = self._next_port
             self._next_port +=1
 
             self._services[request.name] = {'port': port, 'value': request.value}
-
+            # Calling the register, to register the service
             self._contact_registry('map', request.name)
             return portmapper_pb2.RegisterReply(port=port)
         
     def UnregisterService(self, request, context):
+        # Acquire lock to safely access the services dictionary
         with self._lock:
             for name, service in list(self._services.items()):
+                # Searching for a service that has a specific port
                 if service['port'] == request.port:
+                    # Removing the service
                     del self._services[name]
                     self._contact_registry('unmap', name)
                     return portmapper_pb2.UnregisterReply(status=0)
-         
+            # Service not found
             return portmapper_pb2.UnregisterReply(status=-1)
 
     def GetServiceInfo(self, request, context):
+        # Acquire lock to safely access the services dictionary
         with self._lock:
+            # Verify if the service is already register, if so, return the info
             if request.name in self._services:
                 return portmapper_pb2.GetInfoReply(port=self._services[request.name]['port'], value=self._services[request.name]['value'])
-            
+            # Service not found
             return portmapper_pb2.GetInfoReply(port=-1, value=0.0)
 
     def Terminate(self, request, context):
+        # Acquire lock to safely access the services dictionary
         with self._lock:
             count = len(self._services)
         
+        # Shutdown the server in a separate thread after a short delay to avoid errors
         def shutdown():
             time.sleep(1) 
             self._server.stop(0)
 
         threading.Thread(target=shutdown).start()
+        # Return the number of registered services before termination
         return portmapper_pb2.TerminateReply(registered_services_count=count)
 
 
