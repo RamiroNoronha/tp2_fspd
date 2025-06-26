@@ -1,2 +1,0 @@
-R streaming_de_video 45.8
-R servico_de_banco_de_dados 123.9
